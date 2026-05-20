@@ -1,0 +1,189 @@
+body.app-bg {
+    background-color: #f4f6f9;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Login */
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 95vh;
+}
+
+.login-card {
+    width: 420px;
+    background: white;
+    padding: 35px;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
+.app-logo {
+    width: 90px;
+    height: auto;
+}
+
+/* Navbar */
+
+.app-navbar {
+    background: linear-gradient(90deg, #0f4c81, #1363a1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.nav-logo {
+    width: 125px;
+    height: auto;
+}
+
+/* Cards */
+
+.card {
+    border: none;
+    border-radius: 14px;
+}
+
+.card-body {
+    padding: 28px;
+}
+
+/* Table */
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background-color: #f0f4f8;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.table td,
+.table th {
+    vertical-align: middle;
+}
+
+.table tfoot th {
+    background-color: #f8fafc;
+    font-size: 15px;
+}
+
+/* Inputs */
+
+.form-control {
+    border-radius: 8px;
+    height: 42px;
+    border: 1px solid #d1d5db;
+}
+
+.form-control:focus {
+    border-color: #1363a1;
+    box-shadow: 0 0 0 0.15rem rgba(19,99,161,0.2);
+}
+
+/* Buttons */
+
+.btn {
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #1363a1;
+    border-color: #1363a1;
+}
+
+.btn-primary:hover {
+    background-color: #0f4c81;
+    border-color: #0f4c81;
+}
+
+.btn-success {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-warning {
+    color: #212529;
+}
+
+/* Alerts */
+
+.alert {
+    border-radius: 10px;
+}
+
+/* Success */
+
+.success-logo {
+    width: 90px;
+    height: auto;
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+
+    .card-body {
+        padding: 18px;
+    }
+
+    .table {
+        font-size: 14px;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+}
+/* Footer */
+
+.app-footer {
+    width: 100%;
+    text-align: center;
+    padding: 14px 0;
+    margin-top: 40px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.app-footer strong {
+    color: #0f4c81;
+    font-weight: 600;
+}
+
+.footer-icon {
+    color: #2563eb;
+    margin-right: 6px;
+}
+.user-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+}
+
+.hello-text {
+    font-weight: 500;
+}
+
+.role-badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.admin-badge {
+    background: #facc15;
+    color: #111827;
+}
+
+.finance-badge {
+    background: #dbeafe;
+    color: #1e40af;
+}
