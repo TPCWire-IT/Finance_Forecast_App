@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Manage Sales Teams</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+</head>
+
+<body class="app-bg">
+
+<nav class="navbar navbar-expand-lg navbar-dark app-navbar px-4">
+
+    <div class="container-fluid">
+
+        <div class="d-flex align-items-center">
+            <img src="{{ url_for('static', filename='img/logo.png') }}"
+                 class="nav-logo me-3">
+
+            <span class="navbar-brand mb-0 h1">
+                Manage Sales Teams
+            </span>
+        </div>
+
+        <div class="d-flex align-items-center">
+
+            <div class="user-chip me-3">
+
+                <span class="hello-text">
+                    Hi, {{ user_display }}
+                </span>
+
+                {% if role == "dso" %}
+                    <span class="role-badge admin-badge">Admin</span>
+                {% else %}
+                    <span class="role-badge finance-badge">Finance</span>
+                {% endif %}
+
+            </div>
+
+            <a href="{{ url_for('forecast_input') }}"
+               class="btn btn-light btn-sm me-2">
+
+                Forecast
+
+            </a>
+
+            {% if role == "dso" %}
+                <a href="{{ url_for('admin') }}"
+                   class="btn btn-warning btn-sm me-2">
+
+                    Admin
+
+                </a>
+            {% endif %}
+
+            <a href="{{ url_for('logout') }}"
+               class="btn btn-outline-light btn-sm">
+
+                Logout
+
+            </a>
+
+        </div>
+
+    </div>
+
+</nav>
+
+<div class="container mt-4">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            {{ message }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <div>
+                    <h4 class="mb-1">Sales Team Configuration</h4>
+
+                    <div class="text-muted small">
+                        Active teams appear in Forecast Input automatically.
+                    </div>
+                </div>
+
+            </div>
+
+            <form method="post" class="row g-3">
+
+                <input type="hidden"
+                       name="csrf_token"
+                       value="{{ csrf_token() }}">
+
+                <input type="hidden"
+                       name="action"
+                       value="add">
+
+                <div class="col-md-8">
+
+                    <label class="form-label">
+                        Sales Team Name
+                    </label>
+
+                    <input name="sales_team"
+                           class="form-control"
+                           placeholder="Example: TPC-NEW"
+                           required>
+
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end">
+
+                    <button class="btn btn-primary w-100"
+                            type="submit">
+
+                        Add Sales Team
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+
+                <h4 class="mb-0">
+                    Existing Sales Teams
+                </h4>
+
+                <span class="text-muted small">
+                    Active teams are available in forecast input
+                </span>
+
+            </div>
+
+            <div class="table-responsive">
+
+                <table class="table table-bordered align-middle">
+
+                    <thead class="table-light">
+
+                        <tr>
+                            <th style="width: 50%;">Sales Team</th>
+                            <th>Status</th>
+                            <th style="width: 180px;">Action</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for team in teams %}
+
+                        <tr>
+
+                            <td>
+                                <strong>{{ team.SalesTeam }}</strong>
+                            </td>
+
+                            <td>
+
+                                {% if team.IsActive %}
+
+                                    <span class="badge bg-success">
+                                        Active
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge bg-secondary">
+                                        Inactive
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                <form method="post">
+
+                                    <input type="hidden"
+                                           name="csrf_token"
+                                           value="{{ csrf_token() }}">
+
+                                    <input type="hidden"
+                                           name="sales_team_id"
+                                           value="{{ team.SalesTeamId }}">
+
+                                    {% if team.IsActive %}
+
+                                        <button class="btn btn-danger btn-sm"
+                                                type="submit"
+                                                name="action"
+                                                value="deactivate">
+
+                                            Remove
+
+                                        </button>
+
+                                    {% else %}
+
+                                        <button class="btn btn-success btn-sm"
+                                                type="submit"
+                                                name="action"
+                                                value="activate">
+
+                                            Activate
+
+                                        </button>
+
+                                    {% endif %}
+
+                                </form>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="app-footer">
+    <span class="footer-icon">⚡</span>
+    Powered by <strong>DSO</strong>
+</div>
+
+</body>
+</html>

@@ -187,3 +187,32 @@ body.app-bg {
     background: #dbeafe;
     color: #1e40af;
 }
+.help-float-btn {
+    position: fixed;
+    right: 28px;
+    bottom: 28px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: none;
+    background-color: #0f4c81;
+    color: white;
+    font-size: 26px;
+    font-weight: 700;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    z-index: 1050;
+    cursor: pointer;
+}
+
+.help-float-btn:hover {
+    background-color: #1363a1;
+}
+
+.help-list {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.help-list li {
+    margin-bottom: 10px;
+}
