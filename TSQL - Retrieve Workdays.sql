@@ -1,0 +1,6 @@
+SELECT [MonthStartDate] [MonthStart]
+	,[Date]
+	,CASE WHEN [IsWorkdayUSA] = 1 THEN 1 ELSE 0 END [IsWorkdayUSA]
+	,CASE WHEN [IsWorkdayCAN] = 1 THEN 1 ELSE 0 END [IsWorkdayCAN]
+	,CASE WHEN [IsWorkdayMEX] = 1 THEN 1 ELSE 0 END [IsWorkdayMEX]
+FROM [ODIN-Production].[MIMIR].[DIM_Date]

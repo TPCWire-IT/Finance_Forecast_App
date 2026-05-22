@@ -50,7 +50,62 @@
 </div>
 <div class="app-footer">
     <span class="footer-icon">⚡</span>
-    Powered by <strong>DSO TPC WIRE</strong>
+    Powered by <strong>DSO</strong>
 </div>
+<button type="button"
+        class="help-float-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#forecastHelpModal">
+    ?
+</button>
+
+<div class="modal fade"
+     id="forecastHelpModal"
+     tabindex="-1"
+     aria-labelledby="forecastHelpModalLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="forecastHelpModalLabel">
+                    Forecast Submission Help
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <ul class="help-list">
+                    <li>Finance can submit the forecast once per month.</li>
+                    <li>After final submission, the month will be locked.</li>
+                    <li>Forecast data will be available in Power BI after the next scheduled refresh.</li>
+                    <li>If changes are needed after final submission, contact the DSO team to reopen the month.</li>
+                    <li>Sales Team additions or removals are managed by the DSO team.</li>
+                </ul>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-primary"
+                        data-bs-dismiss="modal">
+                    Got it
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
