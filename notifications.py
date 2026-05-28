@@ -1,80 +1,60 @@
 import os
-import smtplib
-from email.message import EmailMessage
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()
 
 
-def send_email(subject, body, recipients):
-    smtp_server = os.getenv("SMTP_SERVER")
-    smtp_port = int(os.getenv("SMTP_PORT", "25"))
-    smtp_sender = os.getenv("SMTP_SENDER")
+def teams_enabled():
+    return os.getenv("TEAMS_NOTIFICATIONS_ENABLED", "true").lower() == "true"
 
-    if not smtp_server or not smtp_sender:
-        print("SMTP not configured. Email skipped.")
+
+def send_teams_message(title, message):
+    webhook_url = os.getenv("TEAMS_WEBHOOK_URL")
+
+    if not teams_enabled() or not webhook_url:
+        print("Teams notification skipped.")
         return
 
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = smtp_sender
-    msg["To"] = ", ".join(recipients)
-    msg.set_content(body)
+    payload = {
+        "title": title,
+        "message": message
+    }
 
-    with smtplib.SMTP(smtp_server, smtp_port) as smtp:
-        smtp.send_message(msg)
-
-
-def get_dso_recipients():
-    return [
-        email.strip()
-        for email in os.getenv("DSO_EMAILS", "").split(",")
-        if email.strip()
-    ]
-
-
-def get_finance_recipients():
-    return [
-        email.strip()
-        for email in os.getenv("FINANCE_EMAILS", "").split(",")
-        if email.strip()
-    ]
+    try:
+        response = requests.post(webhook_url, json=payload, timeout=15)
+        response.raise_for_status()
+        print("Teams notification sent.")
+    except Exception as error:
+        print("Teams notification failed:", str(error))
 
 
 def notify_dso_forecast_submitted(forecast_month, submitted_by):
-    send_email(
-        subject=f"Forecast submitted for {forecast_month:%b %Y}",
-        body=f"Finance submitted forecast for {forecast_month:%b %Y}.\n\nSubmitted by: {submitted_by}",
-        recipients=get_dso_recipients(),
+    send_teams_message(
+        title=f"Forecast Submitted - {forecast_month:%b %Y}",
+        message=(
+            f"Finance submitted the forecast for {forecast_month:%b %Y}.\n\n"
+            f"Submitted by: {submitted_by}\n\n"
+            "Processing has started."
+        ),
     )
 
 
 def notify_processing_success(forecast_month):
-    subject = f"Forecast processing completed for {forecast_month:%b %Y}"
-
-    dso_body = f"Forecast processing completed successfully for {forecast_month:%b %Y}."
-    finance_body = (
-        f"Forecast was processed successfully for {forecast_month:%b %Y}.\n\n"
-        "Data will be visible in Power BI after the midnight refresh."
+    send_teams_message(
+        title=f"Forecast Processing Completed - {forecast_month:%b %Y}",
+        message=(
+            f"Forecast processing completed successfully for {forecast_month:%b %Y}.\n\n"
+            "Forecast data will be visible in Power BI after the next scheduled refresh."
+        ),
     )
-
-    send_email(subject, dso_body, get_dso_recipients())
-    send_email(subject, finance_body, get_finance_recipients())
 
 
 def notify_processing_failure(forecast_month, error_message):
-    dso_subject = f"Forecast processing failed for {forecast_month:%b %Y}"
-    fin_subject = f"Forecast processing issue for {forecast_month:%b %Y}"
-
-    dso_body = (
-        f"Forecast processing failed for {forecast_month:%b %Y}.\n\n"
-        f"Error:\n{error_message}"
+    send_teams_message(
+        title=f"Forecast Processing Failed - {forecast_month:%b %Y}",
+        message=(
+            f"Forecast processing failed for {forecast_month:%b %Y}.\n\n"
+            f"Error:\n{error_message}"
+        ),
     )
-
-    finance_body = (
-        f"Forecast was submitted for {forecast_month:%b %Y}, "
-        "but processing failed. DSO has been notified."
-    )
-
-    send_email(dso_subject, dso_body, get_dso_recipients())
-    send_email(fin_subject, finance_body, get_finance_recipients())

@@ -232,18 +232,27 @@ def run_processing_background(forecast_month, submitted_by):
     try:
         print("Forecast processing started:", forecast_month)
 
-        notify_dso_forecast_submitted(forecast_month, submitted_by)
+        try:
+            notify_dso_forecast_submitted(forecast_month, submitted_by)
+        except Exception as notify_error:
+            print("Submission notification failed:", str(notify_error))
 
         process_forecast(forecast_month)
 
-        notify_processing_success(forecast_month)
+        try:
+            notify_processing_success(forecast_month)
+        except Exception as notify_error:
+            print("Success notification failed:", str(notify_error))
 
         print("Forecast processing completed successfully:", forecast_month)
 
     except Exception as error:
         print("Forecast processing failed:", str(error))
-        notify_processing_failure(forecast_month, str(error))
 
+        try:
+            notify_processing_failure(forecast_month, str(error))
+        except Exception as notify_error:
+            print("Failure notification failed:", str(notify_error))
 
 def login_required(view_func):
     @wraps(view_func)
