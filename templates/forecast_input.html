@@ -26,20 +26,21 @@
                 <a href="{{ url_for('admin') }}" class="btn btn-warning btn-sm me-2">
                     Admin Control
                 </a>
-                 <a href="{{ url_for('sales_teams_admin') }}" class="btn btn-light btn-sm me-2">
-        Manage Sales Teams
-    </a>
+
+                <a href="{{ url_for('sales_teams_admin') }}" class="btn btn-light btn-sm me-2">
+                    Manage Sales Teams
+                </a>
             {% endif %}
 
-         <div class="user-chip me-3">
-    <span class="hello-text">Hi, {{ user_display }}</span>
+            <div class="user-chip me-3">
+                <span class="hello-text">Hi, {{ user_display }}</span>
 
-    {% if role == "dso" %}
-        <span class="role-badge admin-badge">Admin</span>
-    {% else %}
-        <span class="role-badge finance-badge">Finance</span>
-    {% endif %}
-</div>
+                {% if role == "dso" %}
+                    <span class="role-badge admin-badge">Admin</span>
+                {% else %}
+                    <span class="role-badge finance-badge">Finance</span>
+                {% endif %}
+            </div>
 
             <a href="{{ url_for('logout') }}" class="btn btn-light btn-sm">
                 Logout
@@ -97,7 +98,7 @@
         </div>
     {% endif %}
 
-    <form method="post">
+    <form method="post" id="forecastForm">
 
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -129,12 +130,11 @@
 
                             <td>
 
-                                <input type="number"
-                                       step="0.01"
-                                       min="0"
+                                <input type="text"
+                                       inputmode="numeric"
                                        class="form-control forecast-order"
                                        name="order_{{ team }}"
-                                       value="{{ saved_values.get(team, {}).get('order_forecast', '') }}"
+                                       value="{{ '{:,.0f}'.format(saved_values.get(team, {}).get('order_forecast', 0)) if saved_values.get(team, {}).get('order_forecast') is not none else '' }}"
                                        {% if already_submitted %}disabled{% endif %}
                                        required>
 
@@ -142,12 +142,11 @@
 
                             <td>
 
-                                <input type="number"
-                                       step="0.01"
-                                       min="0"
+                                <input type="text"
+                                       inputmode="numeric"
                                        class="form-control forecast-revenue"
                                        name="revenue_{{ team }}"
-                                       value="{{ saved_values.get(team, {}).get('revenue_forecast', '') }}"
+                                       value="{{ '{:,.0f}'.format(saved_values.get(team, {}).get('revenue_forecast', 0)) if saved_values.get(team, {}).get('revenue_forecast') is not none else '' }}"
                                        {% if already_submitted %}disabled{% endif %}
                                        required>
 
@@ -216,39 +215,11 @@
 
 </div>
 
-<script>
-
-function updateTotals() {
-
-    let orderTotal = 0;
-    let revenueTotal = 0;
-
-    document.querySelectorAll('.forecast-order').forEach(function(input) {
-        orderTotal += parseFloat(input.value || 0);
-    });
-
-    document.querySelectorAll('.forecast-revenue').forEach(function(input) {
-        revenueTotal += parseFloat(input.value || 0);
-    });
-
-    document.getElementById('orderTotal').innerText =
-        orderTotal.toLocaleString();
-
-    document.getElementById('revenueTotal').innerText =
-        revenueTotal.toLocaleString();
-}
-
-document.querySelectorAll('input[type="number"]').forEach(function(input) {
-    input.addEventListener('input', updateTotals);
-});
-
-updateTotals();
-
-</script>
 <div class="app-footer">
     <span class="footer-icon">⚡</span>
     Powered by <strong>DSO</strong>
 </div>
+
 <button type="button"
         class="help-float-btn"
         data-bs-toggle="modal"
@@ -303,6 +274,83 @@ updateTotals();
     </div>
 
 </div>
+
+<script>
+function cleanNumber(value) {
+    return String(value || '').replace(/,/g, '').trim();
+}
+
+function formatNumber(value) {
+    const cleanedValue = cleanNumber(value);
+
+    if (cleanedValue === '' || isNaN(cleanedValue)) {
+        return '';
+    }
+
+    return Number(cleanedValue).toLocaleString('en-US', {
+        maximumFractionDigits: 0
+    });
+}
+
+function getNumericValue(value) {
+    const cleanedValue = cleanNumber(value);
+
+    if (cleanedValue === '' || isNaN(cleanedValue)) {
+        return 0;
+    }
+
+    return Number(cleanedValue);
+}
+
+function updateTotals() {
+
+    let orderTotal = 0;
+    let revenueTotal = 0;
+
+    document.querySelectorAll('.forecast-order').forEach(function(input) {
+        orderTotal += getNumericValue(input.value);
+    });
+
+    document.querySelectorAll('.forecast-revenue').forEach(function(input) {
+        revenueTotal += getNumericValue(input.value);
+    });
+
+    document.getElementById('orderTotal').innerText =
+        orderTotal.toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+    document.getElementById('revenueTotal').innerText =
+        revenueTotal.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+document.querySelectorAll('.forecast-order, .forecast-revenue').forEach(function(input) {
+
+    input.addEventListener('focus', function() {
+        this.value = cleanNumber(this.value);
+    });
+
+    input.addEventListener('blur', function() {
+        this.value = formatNumber(this.value);
+        updateTotals();
+    });
+
+    input.addEventListener('input', updateTotals);
+
+    if (input.value) {
+        input.value = formatNumber(input.value);
+    }
+});
+
+document.getElementById('forecastForm').addEventListener('submit', function() {
+    document.querySelectorAll('.forecast-order, .forecast-revenue').forEach(function(input) {
+        input.value = cleanNumber(input.value);
+    });
+});
+
+updateTotals();
+
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

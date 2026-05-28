@@ -17,7 +17,6 @@ from notifications import (
 )
 
 load_dotenv()
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY')
 
@@ -55,12 +54,16 @@ def get_current_month():
 def get_sales_teams():
     conn = get_sql_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+
+    cursor.execute(
+        """
         SELECT SalesTeam
-        FROM dbo.Forecast_Sales_Team
+        FROM loki.Forecast_Sales_Team
         WHERE IsActive = 1
         ORDER BY SalesTeam
-    """)
+        """
+    )
+
     teams = [row.SalesTeam for row in cursor.fetchall()]
     conn.close()
     return teams
@@ -69,11 +72,15 @@ def get_sales_teams():
 def get_all_sales_teams():
     conn = get_sql_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+
+    cursor.execute(
+        """
         SELECT SalesTeamId, SalesTeam, IsActive
-        FROM dbo.Forecast_Sales_Team
+        FROM loki.Forecast_Sales_Team
         ORDER BY IsActive DESC, SalesTeam
-    """)
+        """
+    )
+
     teams = cursor.fetchall()
     conn.close()
     return teams
@@ -82,10 +89,15 @@ def get_all_sales_teams():
 def add_sales_team(sales_team):
     conn = get_sql_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO dbo.Forecast_Sales_Team (SalesTeam, IsActive)
+
+    cursor.execute(
+        """
+        INSERT INTO loki.Forecast_Sales_Team (SalesTeam, IsActive)
         VALUES (?, 1)
-    """, sales_team)
+        """,
+        sales_team,
+    )
+
     conn.commit()
     conn.close()
 
@@ -93,11 +105,17 @@ def add_sales_team(sales_team):
 def set_sales_team_status(sales_team_id, is_active):
     conn = get_sql_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE dbo.Forecast_Sales_Team
+
+    cursor.execute(
+        """
+        UPDATE loki.Forecast_Sales_Team
         SET IsActive = ?
         WHERE SalesTeamId = ?
-    """, is_active, sales_team_id)
+        """,
+        is_active,
+        sales_team_id,
+    )
+
     conn.commit()
     conn.close()
 
@@ -105,11 +123,15 @@ def set_sales_team_status(sales_team_id, is_active):
 def get_available_months():
     conn = get_sql_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+
+    cursor.execute(
+        """
         SELECT DISTINCT ForecastMonth
-        FROM dbo.Forecast_Input
+        FROM loki.Forecast_Input
         ORDER BY ForecastMonth DESC
-    """)
+        """
+    )
+
     months = [row.ForecastMonth for row in cursor.fetchall()]
     conn.close()
     return months
@@ -118,11 +140,16 @@ def get_available_months():
 def get_forecast_rows(forecast_month):
     conn = get_sql_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+
+    cursor.execute(
+        """
         SELECT SalesTeam, OrderForecast, RevenueForecast, Status
-        FROM dbo.Forecast_Input
+        FROM loki.Forecast_Input
         WHERE ForecastMonth = ?
-    """, forecast_month)
+        """,
+        forecast_month,
+    )
+
     rows = cursor.fetchall()
     conn.close()
 
@@ -139,36 +166,38 @@ def get_forecast_rows(forecast_month):
     return saved_values, status
 
 
-def save_forecast_to_sql(forecast_month, rows, submitted_by, status):
+def save_forecast_to_sql(forecast_month, rows, status):
     conn = get_sql_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
-            DELETE FROM dbo.Forecast_Input
+        cursor.execute(
+            """
+            DELETE FROM loki.Forecast_Input
             WHERE ForecastMonth = ?
               AND Status IN ('Draft', 'Submitted')
-        """, forecast_month)
+            """,
+            forecast_month,
+        )
 
         for row in rows:
-            cursor.execute("""
-                INSERT INTO dbo.Forecast_Input
+            cursor.execute(
+                """
+                INSERT INTO loki.Forecast_Input
                 (
                     ForecastMonth,
                     SalesTeam,
                     OrderForecast,
                     RevenueForecast,
-                    Status,
-                    SubmittedBy
+                    Status
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
-            """,
+                VALUES (?, ?, ?, ?, ?)
+                """,
                 forecast_month,
                 row["sales_team"],
                 row["order_forecast"],
                 row["revenue_forecast"],
                 status,
-                submitted_by,
             )
 
         conn.commit()
@@ -184,14 +213,17 @@ def save_forecast_to_sql(forecast_month, rows, submitted_by, status):
 def reopen_forecast_month(forecast_month):
     conn = get_sql_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE dbo.Forecast_Input
-        SET Status = 'Draft',
-            MLProcessed = 0,
-            MLProcessedAt = NULL
+
+    cursor.execute(
+        """
+        UPDATE loki.Forecast_Input
+        SET Status = 'Draft'
         WHERE ForecastMonth = ?
           AND Status = 'Submitted'
-    """, forecast_month)
+        """,
+        forecast_month,
+    )
+
     conn.commit()
     conn.close()
 
@@ -206,12 +238,10 @@ def run_processing_background(forecast_month, submitted_by):
 
         notify_processing_success(forecast_month)
 
-        print("Forecast processing completed successfully.")
+        print("Forecast processing completed successfully:", forecast_month)
 
     except Exception as error:
-        print("PROCESSING ERROR:")
-        print(str(error))
-
+        print("Forecast processing failed:", str(error))
         notify_processing_failure(forecast_month, str(error))
 
 
@@ -221,6 +251,7 @@ def login_required(view_func):
         if "username" not in session:
             return redirect(url_for("login"))
         return view_func(*args, **kwargs)
+
     return wrapper
 
 
@@ -232,7 +263,9 @@ def role_required(*allowed_roles):
                 flash("You do not have access to this page.", "danger")
                 return redirect(url_for("login"))
             return view_func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -312,11 +345,13 @@ def forecast_input():
             if order_value < 0 or revenue_value < 0:
                 errors.append(f"Negative values are not allowed for {team}.")
 
-            rows.append({
-                "sales_team": team,
-                "order_forecast": order_value,
-                "revenue_forecast": revenue_value,
-            })
+            rows.append(
+                {
+                    "sales_team": team,
+                    "order_forecast": order_value,
+                    "revenue_forecast": revenue_value,
+                }
+            )
 
         if errors:
             for error in errors:
@@ -337,9 +372,9 @@ def forecast_input():
             save_forecast_to_sql(
                 forecast_month=forecast_month,
                 rows=rows,
-                submitted_by=session.get("username"),
                 status="Draft",
             )
+
             flash("Forecast saved as draft.", "success")
             return redirect(url_for("forecast_input"))
 
@@ -347,7 +382,6 @@ def forecast_input():
             save_forecast_to_sql(
                 forecast_month=forecast_month,
                 rows=rows,
-                submitted_by=session.get("username"),
                 status="Submitted",
             )
 

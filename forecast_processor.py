@@ -1,7 +1,8 @@
 import os
 import textwrap
-import pyodbc
+
 import pandas as pd
+import pyodbc
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,15 +10,19 @@ load_dotenv()
 
 def get_forecastdb_connection():
     connection_string = os.getenv("SQL_CONNECTION_STRING")
+
     if not connection_string:
         raise RuntimeError("SQL_CONNECTION_STRING is missing in .env file")
+
     return pyodbc.connect(connection_string)
 
 
 def get_odin_connection():
     connection_string = os.getenv("ODIN_CONNECTION_STRING")
+
     if not connection_string:
         raise RuntimeError("ODIN_CONNECTION_STRING is missing in .env file")
+
     return pyodbc.connect(connection_string)
 
 
@@ -35,7 +40,7 @@ def read_forecast_input(forecast_month):
             SalesTeam,
             OrderForecast,
             RevenueForecast
-        FROM dbo.Forecast_Input
+        FROM LOKI.Forecast_Input
         WHERE ForecastMonth = ?
           AND Status = 'Submitted'
     """
@@ -69,10 +74,10 @@ def read_workdays_from_odin():
         "IsWorkdayMEX",
     }
 
-    missing = required_columns - set(df.columns)
+    missing_columns = required_columns - set(df.columns)
 
-    if missing:
-        raise RuntimeError(f"Workday query missing columns: {missing}")
+    if missing_columns:
+        raise RuntimeError(f"Workday query missing columns: {missing_columns}")
 
     return df
 
@@ -182,9 +187,7 @@ def transform_forecast_to_daily(forecast_month, forecast_input_df, workdays_df):
 
     combined_df["ForecastKey"] = (
         combined_df["SalesTeam"].astype(str)
-        + "|"
         + combined_df["ForecastDateKey"].astype(str)
-        + "|"
         + combined_df["ForecastType"].astype(str)
     )
 
@@ -197,7 +200,7 @@ def transform_forecast_to_daily(forecast_month, forecast_input_df, workdays_df):
             "ForecastAmount",
             "ForecastDateKey",
         ]
-    ]
+    ].copy()
 
     return combined_df
 
@@ -209,7 +212,7 @@ def load_to_forecastdb(forecast_month, output_df):
     try:
         cursor.execute(
             """
-            DELETE FROM dbo.FINANCE_BPCForecasts
+            DELETE FROM THOR.FINANCE_BPCForecasts
             WHERE ForecastDate >= ?
               AND ForecastDate < DATEADD(MONTH, 1, ?)
             """,
@@ -220,7 +223,7 @@ def load_to_forecastdb(forecast_month, output_df):
         for _, row in output_df.iterrows():
             cursor.execute(
                 """
-                INSERT INTO dbo.FINANCE_BPCForecasts
+                INSERT INTO THOR.FINANCE_BPCForecasts
                 (
                     ForecastKey,
                     ForecastDate,
@@ -232,10 +235,10 @@ def load_to_forecastdb(forecast_month, output_df):
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
                 row["ForecastKey"],
-                row["ForecastDate"].date(),
+                row["ForecastDate"].to_pydatetime(),
                 row["SalesTeam"],
                 row["ForecastType"],
-                float(row["ForecastAmount"]),
+                int(round(row["ForecastAmount"])),
                 int(row["ForecastDateKey"]),
             )
 
@@ -250,13 +253,22 @@ def load_to_forecastdb(forecast_month, output_df):
 
 
 def process_forecast(forecast_month):
+    print("Step 1: Reading forecast input")
     forecast_input_df = read_forecast_input(forecast_month)
-    workdays_df = read_workdays_from_odin()
+    print("Input rows:", len(forecast_input_df))
 
+    print("Step 2: Reading workdays from ODIN")
+    workdays_df = read_workdays_from_odin()
+    print("Workday rows:", len(workdays_df))
+
+    print("Step 3: Transforming forecast")
     output_df = transform_forecast_to_daily(
         forecast_month=forecast_month,
         forecast_input_df=forecast_input_df,
         workdays_df=workdays_df,
     )
+    print("Output rows:", len(output_df))
 
+    print("Step 4: Loading to ForecastDB")
     load_to_forecastdb(forecast_month, output_df)
+    print("Load complete")
