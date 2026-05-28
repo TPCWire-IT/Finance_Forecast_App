@@ -8,3 +8,4 @@ numpy==2.2.5
 openpyxl==3.1.5
 SQLAlchemy==2.0.40
 gunicorn==23.0.0
+requests==2.32.3
